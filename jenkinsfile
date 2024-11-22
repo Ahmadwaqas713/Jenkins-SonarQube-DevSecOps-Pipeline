@@ -1,0 +1,56 @@
+pipeline { 
+    agent any 
+    environment { 
+        SONARQUBE = 'SonarQube' // SonarQube configuration name defined in Jenkins 
+    } 
+    stages { 
+        stage('Checkout') { 
+            steps { 
+                git 'https://github.com/Ahmadwaqas713/Jenkins-SonarQube-DevSecOps-Pipeline.git' 
+            } 
+        } 
+        stage('Build') { 
+            steps { 
+                script { 
+                    // Use Maven to build the project 
+                    sh 'mvn clean install' 
+                } 
+            } 
+        } 
+        stage('SonarQube Analysis') { 
+            steps { 
+                script { 
+                    withSonarQubeEnv('SonarQube') { 
+                        // Specify your SonarQube host URL
+                        sh '''
+                        mvn sonar:sonar \
+                          -Dsonar.host.url=http://10.0.2.15:9000 \
+                          -Dsonar.login=sqa_e37932f305a2213315c908fe17c79f4dc6cb3333
+                        ''' 
+                    } 
+                } 
+            } 
+        } 
+        stage('Quality Gate') { 
+            steps { 
+                script { 
+                    // Wait for SonarQube quality gate result 
+                    timeout(time: 1, unit: 'HOURS') { 
+                        waitForQualityGate() 
+                    } 
+                } 
+            } 
+        } 
+        stage('Deploy') { 
+            steps { 
+                // Replace with your deployment step if needed 
+                echo "Deploy the application" 
+            } 
+        } 
+    } 
+    post { 
+        always { 
+            echo 'Pipeline has finished.' 
+        } 
+    } 
+}
